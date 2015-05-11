@@ -67,6 +67,8 @@ $primary: #ff7175;
 /* Code
 	 ========================================================================== */
 
+@import url(http://fonts.googleapis.com/css?family=Fira+Mono);
+
 .docs-cell-pre {
 	background: #f4f8ff;
 	margin: 0 4rem 3rem;
@@ -77,7 +79,7 @@ $primary: #ff7175;
 	background: #f4f8ff;
 	border-radius: 0;
 	border: 0;
-	font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+	font-family: 'Fira Mono', monospace;
 	font-size: 1.1rem;
 }
 

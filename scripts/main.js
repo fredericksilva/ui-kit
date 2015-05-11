@@ -5624,6 +5624,416 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
     };
 
     var lib$scripts$Component$$default = lib$scripts$Component$$Component;
+    "use strict";
+
+    var lib$scripts$Features$$Features = {
+        dragDrop: function dragDrop() {
+            return typeof FileReader !== "undefined" && "draggable" in document.createElement("span");
+        },
+
+        ajaxUpload: function ajaxUpload() {
+            return !!window.FormData && "upload" in new XMLHttpRequest();
+        }
+    };
+
+    var lib$scripts$Features$$default = lib$scripts$Features$$Features;
+    "use strict";
+
+    /*
+     * DragDropUpload component.
+     */
+
+    var lib$scripts$DragDropUpload$$DragDropUpload = (function (_src$public$vendor$metaljs$src$component$Component$$default2) {
+        /**
+         * @inheritDoc
+         */
+
+        function lib$scripts$DragDropUpload$$DragDropUpload(opt_config) {
+            _classCallCheck(this, lib$scripts$DragDropUpload$$DragDropUpload);
+
+            _get(Object.getPrototypeOf(lib$scripts$DragDropUpload$$DragDropUpload.prototype), "constructor", this).call(this, opt_config);
+        }
+
+        _inherits(lib$scripts$DragDropUpload$$DragDropUpload, _src$public$vendor$metaljs$src$component$Component$$default2);
+
+        _createClass(lib$scripts$DragDropUpload$$DragDropUpload, {
+            attached: {
+
+                /**
+                 * @inheritDoc
+                 */
+
+                value: function attached() {
+                    if (this.isCompatible_) {
+                        this.eventHandler_ = new src$public$vendor$metaljs$src$events$EventHandler$$default();
+                        this.eventHandler_.add(this.on("dragenter", this.onDragEnter_, this), this.on("dragleave", this.onDragLeave_, this), this.on("dragover", this.preventEvent_, this), this.on("drop", this.onDrop_, this));
+                    }
+                }
+            },
+            created: {
+
+                /**
+                 * @inheritDoc
+                 */
+
+                value: function created() {
+                    this.isCompatible_ = lib$scripts$Features$$default.dragDrop() && lib$scripts$Features$$default.ajaxUpload();
+                }
+            },
+            detached: {
+
+                /**
+                 * @inheritDoc
+                 */
+
+                value: function detached() {
+                    if (this.isCompatible_) {
+                        this.eventHandler_.removeAllListeners();
+                    }
+                }
+            },
+            onDragEnter_: {
+
+                /**
+                 * Adds a class, specified in `hoverClass` attribute, to the main element.
+                 *
+                 * @protected
+                 * @param {!Event} event Drag enter event
+                 */
+
+                value: function onDragEnter_(event) {
+                    this.preventEvent_(event);
+
+                    if (this.hoverClass) {
+                        src$public$vendor$metaljs$src$dom$dom$$default.addClasses(this.element, [this.hoverClass]);
+                    }
+                }
+            },
+            onDragLeave_: {
+
+                /**
+                 * Removes a class, specified in `hoverClass` attribute, from the main element.
+                 *
+                 * @protected
+                 * @param {!Event} event Drag leave event
+                 */
+
+                value: function onDragLeave_(event) {
+                    this.preventEvent_(event);
+
+                    if (this.hoverClass && src$public$vendor$metaljs$src$dom$dom$$default.hasClass(event.target, this.hoverClass)) {
+                        src$public$vendor$metaljs$src$dom$dom$$default.removeClasses(this.element, [this.hoverClass]);
+                    }
+                }
+            },
+            onDrop_: {
+
+                /**
+                 * Handles dropping files in the main area.
+                 *
+                 * @protected
+                 * @param {!Event} event Drop event
+                 */
+
+                value: function onDrop_(event) {
+                    this.preventEvent_(event);
+                    this.uploadFiles_(event.dataTransfer.files);
+                }
+            },
+            preventEvent_: {
+
+                /**
+                 * Prevents a native event.
+                 *
+                 * @protected
+                 * @param {!Event} event The event to be prevented
+                 */
+
+                value: function preventEvent_(event) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            },
+            uploadFiles_: {
+
+                /**
+                 * Uploads files to the provided URL from the `uploadURL` attribute.
+                 *
+                 * @param {!Array.<File>} files List of files to be uploaded to server
+                 */
+
+                value: function uploadFiles_(files) {
+                    var formData = new FormData();
+
+                    for (var i = 0; i < files.length; i++) {
+                        formData.append("file", files[i]);
+                    }
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", this.uploadURL);
+
+                    xhr.onerror = (function () {
+                        this.emit("uploadFailed");
+                    }).bind(this);
+
+                    xhr.onload = (function () {
+                        this.emit("uploadFinished");
+                    }).bind(this);
+
+                    xhr.upload.onprogress = (function (event) {
+                        if (event.lengthComputable) {
+                            this.emit("uploadProgress", event.loaded / event.total * 100 | 0);
+                        }
+                    }).bind(this);
+
+                    xhr.send(formData);
+
+                    this.emit("uploadStart", xhr);
+                }
+            }
+        });
+
+        return lib$scripts$DragDropUpload$$DragDropUpload;
+    })(src$public$vendor$metaljs$src$component$Component$$default);
+
+    /**
+     * DragDropUpload attributes definition.
+     * @type {Object}
+     * @static
+     */
+    lib$scripts$DragDropUpload$$DragDropUpload.ATTRS = {
+        /**
+         * The class which have to be added on the bounding box when user hovers on it.
+         *
+         * @type {string}
+         * @default dragdrop-hover
+         */
+        hoverClass: {
+            validator: function validator(value) {
+                return src$public$vendor$metaljs$src$core$$default.isString(value) || src$public$vendor$metaljs$src$core$$default.isNull(value);
+            },
+            value: "dragdrop-hover"
+        },
+
+        /**
+         * The URL where the files should be uploaded.
+         *
+         * @type {string}
+         */
+        uploadURL: {
+            validator: src$public$vendor$metaljs$src$core$$default.isString
+        }
+    };
+
+    src$public$vendor$metaljs$src$component$ComponentRegistry$$default.register("DragDropUpload", lib$scripts$DragDropUpload$$DragDropUpload);
+
+    var lib$scripts$DragDropUpload$$default = lib$scripts$DragDropUpload$$DragDropUpload;
+    var lib$scripts$List$soy$$Templates = src$public$vendor$metaljs$src$component$ComponentRegistry$$default.Templates;
+    // This file was automatically generated from List.soy.
+    // Please don't edit this file by hand.
+
+    /**
+     * @fileoverview Templates in namespace Templates.List.
+     * @hassoydeltemplate {List}
+     * @hassoydeltemplate {List.items}
+     * @hassoydelcall {List}
+     * @hassoydelcall {List.items}
+     */
+
+    if (typeof lib$scripts$List$soy$$Templates.List == "undefined") {
+        lib$scripts$List$soy$$Templates.List = {};
+    }
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.content = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("List.items"), "", true)(opt_data, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.content.soyTemplateName = "Templates.List.content";
+    }
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.items = function (opt_data, opt_ignored, opt_ijData) {
+        var output = "";
+        var itemList5 = opt_data.items;
+        var itemListLen5 = itemList5.length;
+        for (var itemIndex5 = 0; itemIndex5 < itemListLen5; itemIndex5++) {
+            var itemData5 = itemList5[itemIndex5];
+            output += "<li class=\"list-item u-cf\">";
+            if (itemData5.icons) {
+                output += "<div class=\"list-icons u-pull-right\">";
+                var iconList10 = itemData5.icons;
+                var iconListLen10 = iconList10.length;
+                for (var iconIndex10 = 0; iconIndex10 < iconListLen10; iconIndex10++) {
+                    var iconData10 = iconList10[iconIndex10];
+                    output += "<span class=\"list-icon " + soy.$$escapeHtmlAttribute(iconData10) + "\"></span>";
+                }
+                output += "</div>";
+            }
+            output += (itemData5.img ? "<span class=\"list-image u-pull-left " + soy.$$escapeHtmlAttribute(itemData5.img["class"]) + "\"><img src=\"" + soy.$$escapeHtmlAttribute(soy.$$filterNormalizeUri(itemData5.img.src)) + "\"></span>" : "") + "<div class=\"list-main-content u-pull-left\"><div class=\"list-text-primary\">" + soy.$$escapeHtml(itemData5.content) + "</div>" + (itemData5.help ? "<div class=\"list-text-secondary\">" + soy.$$escapeHtml(itemData5.help) + "</div>" : "") + "</div></li>";
+        }
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(output);
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.items.soyTemplateName = "Templates.List.items";
+    }
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.__deltemplate_s33_e3f298e9 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml("<ul id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "-items\">" + soy.$$escapeHtml(opt_data.elementContent) + "</ul>");
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.__deltemplate_s33_e3f298e9.soyTemplateName = "Templates.List.__deltemplate_s33_e3f298e9";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("List.items"), "element", 0, lib$scripts$List$soy$$Templates.List.__deltemplate_s33_e3f298e9);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.__deltemplate_s39_88d36183 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("List"), "element", true)({ elementClasses: opt_data.elementClasses, elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + soy.$$getDelegateFn(soy.$$getDelTemplateId("List"), "content", true)(opt_data, null, opt_ijData)), id: opt_data.id }, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.__deltemplate_s39_88d36183.soyTemplateName = "Templates.List.__deltemplate_s39_88d36183";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("List"), "", 0, lib$scripts$List$soy$$Templates.List.__deltemplate_s39_88d36183);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.__deltemplate_s45_22b2cd87 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$List$soy$$Templates.List.content(opt_data, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.__deltemplate_s45_22b2cd87.soyTemplateName = "Templates.List.__deltemplate_s45_22b2cd87";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("List"), "content", 0, lib$scripts$List$soy$$Templates.List.__deltemplate_s45_22b2cd87);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.__deltemplate_s47_4ac84340 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml("<div id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "\" class=\"list component" + soy.$$escapeHtmlAttribute(opt_data.elementClasses ? " " + opt_data.elementClasses : "") + "\" data-component=\"\">" + soy.$$escapeHtml(opt_data.elementContent) + "</div>");
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.__deltemplate_s47_4ac84340.soyTemplateName = "Templates.List.__deltemplate_s47_4ac84340";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("List"), "element", 0, lib$scripts$List$soy$$Templates.List.__deltemplate_s47_4ac84340);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.__deltemplate_s55_605e1843 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("List.items"), "element", true)({ elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + (!opt_ijData.skipSurfaceContents ? soy.$$getDelegateFn(soy.$$getDelTemplateId("List.items"), "content", true)(opt_data, null, opt_ijData) : "")), id: opt_data.id }, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.__deltemplate_s55_605e1843.soyTemplateName = "Templates.List.__deltemplate_s55_605e1843";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("List.items"), "", 0, lib$scripts$List$soy$$Templates.List.__deltemplate_s55_605e1843);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$List$soy$$Templates.List.__deltemplate_s62_a7f1f1fc = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$List$soy$$Templates.List.items(opt_data, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$List$soy$$Templates.List.__deltemplate_s62_a7f1f1fc.soyTemplateName = "Templates.List.__deltemplate_s62_a7f1f1fc";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("List.items"), "content", 0, lib$scripts$List$soy$$Templates.List.__deltemplate_s62_a7f1f1fc);
+
+    lib$scripts$List$soy$$Templates.List.items.params = ["items"];
+    "use strict";
+
+    /**
+     * List component.
+     */
+
+    var lib$scripts$List$$List = (function (_lib$scripts$Component$$default) {
+        function lib$scripts$List$$List(opt_config) {
+            _classCallCheck(this, lib$scripts$List$$List);
+
+            _get(Object.getPrototypeOf(lib$scripts$List$$List.prototype), "constructor", this).call(this, opt_config);
+        }
+
+        _inherits(lib$scripts$List$$List, _lib$scripts$Component$$default);
+
+        return lib$scripts$List$$List;
+    })(lib$scripts$Component$$default);
+
+    /**
+     * Default list elementClasses.
+     * @default list
+     * @type {String}
+     * @static
+     */
+    lib$scripts$List$$List.ELEMENT_CLASSES = "list";
+
+    /**
+     * List attributes definition.
+     * @type {Object}
+     * @static
+     */
+    lib$scripts$List$$List.ATTRS = {
+        /**
+         * The list items. Each is represented by an object that can have the following keys:
+         *   - content: The item's main content.
+         *   - help: (Optional) The item's help content.
+         *   - icons: (Optional) A list of icon css classes to render on the right side.
+         *   - img: (Optional) An object that specifies the image's src and, optionally, a css
+         *       class it should use.
+         * @type {!Array<!Object>}
+         * @default []
+         */
+        items: {
+            validator: Array.isArray,
+            valueFn: function valueFn() {
+                return [];
+            }
+        }
+    };
+
+    src$public$vendor$metaljs$src$component$ComponentRegistry$$default.register("List", lib$scripts$List$$List);
+
+    var lib$scripts$List$$default = lib$scripts$List$$List;
     var lib$scripts$Modal$soy$$Templates = src$public$vendor$metaljs$src$component$ComponentRegistry$$default.Templates;
     // This file was automatically generated from Modal.soy.
     // Please don't edit this file by hand.
@@ -5707,13 +6117,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s19_65c2d4d4 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s82_65c2d4d4 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<section id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "-body\">" + soy.$$escapeHtml(opt_data.elementContent) + "</section>");
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s19_65c2d4d4.soyTemplateName = "Templates.Modal.__deltemplate_s19_65c2d4d4";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s82_65c2d4d4.soyTemplateName = "Templates.Modal.__deltemplate_s82_65c2d4d4";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.body"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s19_65c2d4d4);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.body"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s82_65c2d4d4);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5722,13 +6132,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s25_c9897a65 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s88_c9897a65 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<footer id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "-footer\">" + soy.$$escapeHtml(opt_data.elementContent) + "</footer>");
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s25_c9897a65.soyTemplateName = "Templates.Modal.__deltemplate_s25_c9897a65";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s88_c9897a65.soyTemplateName = "Templates.Modal.__deltemplate_s88_c9897a65";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s25_c9897a65);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s88_c9897a65);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5737,13 +6147,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s31_499dc9aa = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s94_499dc9aa = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<header id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "-header\">" + soy.$$escapeHtml(opt_data.elementContent) + "</header>");
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s31_499dc9aa.soyTemplateName = "Templates.Modal.__deltemplate_s31_499dc9aa";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s94_499dc9aa.soyTemplateName = "Templates.Modal.__deltemplate_s94_499dc9aa";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.header"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s31_499dc9aa);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.header"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s94_499dc9aa);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5752,13 +6162,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s37_45b138fb = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s100_45b138fb = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal"), "element", true)({ elementClasses: opt_data.elementClasses, elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal"), "content", true)(opt_data, null, opt_ijData)), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s37_45b138fb.soyTemplateName = "Templates.Modal.__deltemplate_s37_45b138fb";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s100_45b138fb.soyTemplateName = "Templates.Modal.__deltemplate_s100_45b138fb";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s37_45b138fb);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s100_45b138fb);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5767,13 +6177,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s43_77dbabf9 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s106_77dbabf9 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$Modal$soy$$Templates.Modal.content(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s43_77dbabf9.soyTemplateName = "Templates.Modal.__deltemplate_s43_77dbabf9";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s106_77dbabf9.soyTemplateName = "Templates.Modal.__deltemplate_s106_77dbabf9";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s43_77dbabf9);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s106_77dbabf9);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5782,13 +6192,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s45_df8ef55a = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s108_df8ef55a = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<div id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "\" class=\"modal component" + soy.$$escapeHtmlAttribute(opt_data.elementClasses ? " " + opt_data.elementClasses : "") + "\" data-component=\"\">" + soy.$$escapeHtml(opt_data.elementContent) + "</div>");
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s45_df8ef55a.soyTemplateName = "Templates.Modal.__deltemplate_s45_df8ef55a";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s108_df8ef55a.soyTemplateName = "Templates.Modal.__deltemplate_s108_df8ef55a";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s45_df8ef55a);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal"), "element", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s108_df8ef55a);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5797,13 +6207,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s53_90747620 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s116_90747620 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal.body"), "element", true)({ elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + (!opt_ijData.skipSurfaceContents ? soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal.body"), "content", true)(opt_data, null, opt_ijData) : "")), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s53_90747620.soyTemplateName = "Templates.Modal.__deltemplate_s53_90747620";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s116_90747620.soyTemplateName = "Templates.Modal.__deltemplate_s116_90747620";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.body"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s53_90747620);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.body"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s116_90747620);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5812,13 +6222,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s60_016394a5 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s123_016394a5 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$Modal$soy$$Templates.Modal.body(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s60_016394a5.soyTemplateName = "Templates.Modal.__deltemplate_s60_016394a5";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s123_016394a5.soyTemplateName = "Templates.Modal.__deltemplate_s123_016394a5";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.body"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s60_016394a5);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.body"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s123_016394a5);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5827,13 +6237,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s62_231e36e7 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s125_231e36e7 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "element", true)({ elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + (!opt_ijData.skipSurfaceContents ? soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "content", true)(opt_data, null, opt_ijData) : "")), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s62_231e36e7.soyTemplateName = "Templates.Modal.__deltemplate_s62_231e36e7";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s125_231e36e7.soyTemplateName = "Templates.Modal.__deltemplate_s125_231e36e7";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s62_231e36e7);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s125_231e36e7);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5842,13 +6252,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s69_ff0238db = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s132_ff0238db = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$Modal$soy$$Templates.Modal.footer(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s69_ff0238db.soyTemplateName = "Templates.Modal.__deltemplate_s69_ff0238db";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s132_ff0238db.soyTemplateName = "Templates.Modal.__deltemplate_s132_ff0238db";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s69_ff0238db);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.footer"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s132_ff0238db);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5857,13 +6267,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s71_b8354b7d = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s134_b8354b7d = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal.header"), "element", true)({ elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + (!opt_ijData.skipSurfaceContents ? soy.$$getDelegateFn(soy.$$getDelTemplateId("Modal.header"), "content", true)(opt_data, null, opt_ijData) : "")), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s71_b8354b7d.soyTemplateName = "Templates.Modal.__deltemplate_s71_b8354b7d";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s134_b8354b7d.soyTemplateName = "Templates.Modal.__deltemplate_s134_b8354b7d";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.header"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s71_b8354b7d);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.header"), "", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s134_b8354b7d);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -5872,13 +6282,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s78_7a6de6d1 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s141_7a6de6d1 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$Modal$soy$$Templates.Modal.header(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s78_7a6de6d1.soyTemplateName = "Templates.Modal.__deltemplate_s78_7a6de6d1";
+        lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s141_7a6de6d1.soyTemplateName = "Templates.Modal.__deltemplate_s141_7a6de6d1";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.header"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s78_7a6de6d1);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Modal.header"), "content", 0, lib$scripts$Modal$soy$$Templates.Modal.__deltemplate_s141_7a6de6d1);
 
     lib$scripts$Modal$soy$$Templates.Modal.body.params = ["body"];
     lib$scripts$Modal$soy$$Templates.Modal.footer.params = ["footer"];
@@ -5889,7 +6299,7 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * Modal component.
      */
 
-    var lib$scripts$Modal$$Modal = (function (_lib$scripts$Component$$default) {
+    var lib$scripts$Modal$$Modal = (function (_lib$scripts$Component$$default2) {
         /**
          * @inheritDoc
          */
@@ -5900,7 +6310,7 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
             _get(Object.getPrototypeOf(lib$scripts$Modal$$Modal.prototype), "constructor", this).call(this, opt_config);
         }
 
-        _inherits(lib$scripts$Modal$$Modal, _lib$scripts$Component$$default);
+        _inherits(lib$scripts$Modal$$Modal, _lib$scripts$Component$$default2);
 
         _createClass(lib$scripts$Modal$$Modal, {
             close: {
@@ -6532,13 +6942,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s83_8d49094e = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s146_8d49094e = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("Tooltip"), "element", true)({ elementClasses: opt_data.elementClasses, elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + soy.$$getDelegateFn(soy.$$getDelTemplateId("Tooltip"), "content", true)(opt_data, null, opt_ijData)), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s83_8d49094e.soyTemplateName = "Templates.Tooltip.__deltemplate_s83_8d49094e";
+        lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s146_8d49094e.soyTemplateName = "Templates.Tooltip.__deltemplate_s146_8d49094e";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Tooltip"), "", 0, lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s83_8d49094e);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Tooltip"), "", 0, lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s146_8d49094e);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -6547,13 +6957,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s89_5eaa83f8 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s152_5eaa83f8 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$Tooltip$soy$$Templates.Tooltip.content(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s89_5eaa83f8.soyTemplateName = "Templates.Tooltip.__deltemplate_s89_5eaa83f8";
+        lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s152_5eaa83f8.soyTemplateName = "Templates.Tooltip.__deltemplate_s152_5eaa83f8";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Tooltip"), "content", 0, lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s89_5eaa83f8);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Tooltip"), "content", 0, lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s152_5eaa83f8);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -6562,13 +6972,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s91_71828d2a = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s154_71828d2a = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<div id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "\" class=\"tooltip component" + soy.$$escapeHtmlAttribute(opt_data.elementClasses ? " " + opt_data.elementClasses : "") + "\" data-component=\"\">" + soy.$$escapeHtml(opt_data.elementContent) + "</div>");
     };
     if (goog.DEBUG) {
-        lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s91_71828d2a.soyTemplateName = "Templates.Tooltip.__deltemplate_s91_71828d2a";
+        lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s154_71828d2a.soyTemplateName = "Templates.Tooltip.__deltemplate_s154_71828d2a";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Tooltip"), "element", 0, lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s91_71828d2a);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("Tooltip"), "element", 0, lib$scripts$Tooltip$soy$$Templates.Tooltip.__deltemplate_s154_71828d2a);
 
     lib$scripts$Tooltip$soy$$Templates.Tooltip.content.params = ["content"];
     "use strict";
@@ -6577,7 +6987,7 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * Tooltip component.
      */
 
-    var lib$scripts$Tooltip$$Tooltip = (function (_lib$scripts$Component$$default2) {
+    var lib$scripts$Tooltip$$Tooltip = (function (_lib$scripts$Component$$default3) {
         /**
          * @inheritDoc
          */
@@ -6590,7 +7000,7 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
             this.eventsHandler_ = new src$public$vendor$metaljs$src$events$EventHandler$$default();
         }
 
-        _inherits(lib$scripts$Tooltip$$Tooltip, _lib$scripts$Component$$default2);
+        _inherits(lib$scripts$Tooltip$$Tooltip, _lib$scripts$Component$$default3);
 
         _createClass(lib$scripts$Tooltip$$Tooltip, {
             attached: {
@@ -6909,11 +7319,11 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      */
     lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.items = function (opt_data, opt_ignored, opt_ijData) {
         var output = "";
-        var itemList103 = opt_data.content;
-        var itemListLen103 = itemList103.length;
-        for (var itemIndex103 = 0; itemIndex103 < itemListLen103; itemIndex103++) {
-            var itemData103 = itemList103[itemIndex103];
-            output += "<li class=\"tooltip-menu-item\"><a class=\"tooltip-menu-link\" href=\"" + soy.$$escapeHtmlAttribute(soy.$$filterNormalizeUri(itemData103.href ? itemData103.href : "#")) + "\">" + soy.$$escapeHtml(itemData103.content) + "</a></li>";
+        var itemList166 = opt_data.content;
+        var itemListLen166 = itemList166.length;
+        for (var itemIndex166 = 0; itemIndex166 < itemListLen166; itemIndex166++) {
+            var itemData166 = itemList166[itemIndex166];
+            output += "<li class=\"tooltip-menu-item\"><a class=\"tooltip-menu-link\" href=\"" + soy.$$escapeHtmlAttribute(soy.$$filterNormalizeUri(itemData166.href ? itemData166.href : "#")) + "\">" + soy.$$escapeHtml(itemData166.content) + "</a></li>";
         }
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(output);
     };
@@ -6928,13 +7338,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s110_cfc546d2 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s173_cfc546d2 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<nav id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "\" class=\"tooltip-menu " + soy.$$escapeHtmlAttribute(opt_data.elementClasses ? opt_data.elementClasses : "") + "\" data-component>" + soy.$$escapeHtml(opt_data.elementContent) + "</nav>");
     };
     if (goog.DEBUG) {
-        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s110_cfc546d2.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s110_cfc546d2";
+        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s173_cfc546d2.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s173_cfc546d2";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "element", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s110_cfc546d2);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "element", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s173_cfc546d2);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -6943,13 +7353,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s118_c0ab3df3 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s181_c0ab3df3 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml("<ul id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "-items\" class=\"tooltip-menu-list\">" + soy.$$escapeHtml(opt_data.elementContent) + "</ul>");
     };
     if (goog.DEBUG) {
-        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s118_c0ab3df3.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s118_c0ab3df3";
+        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s181_c0ab3df3.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s181_c0ab3df3";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "element", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s118_c0ab3df3);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "element", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s181_c0ab3df3);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -6958,13 +7368,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s124_8f8c631d = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s187_8f8c631d = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "element", true)({ elementClasses: opt_data.elementClasses, elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + soy.$$getDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "content", true)(opt_data, null, opt_ijData)), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s124_8f8c631d.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s124_8f8c631d";
+        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s187_8f8c631d.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s187_8f8c631d";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s124_8f8c631d);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s187_8f8c631d);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -6973,13 +7383,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s130_f618b41e = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s193_f618b41e = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.content(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s130_f618b41e.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s130_f618b41e";
+        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s193_f618b41e.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s193_f618b41e";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "content", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s130_f618b41e);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu"), "content", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s193_f618b41e);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -6988,13 +7398,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s132_8278e063 = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s195_8278e063 = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "element", true)({ elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + (!opt_ijData.skipSurfaceContents ? soy.$$getDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "content", true)(opt_data, null, opt_ijData) : "")), id: opt_data.id }, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s132_8278e063.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s132_8278e063";
+        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s195_8278e063.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s195_8278e063";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s132_8278e063);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s195_8278e063);
 
     /**
      * @param {Object.<string, *>=} opt_data
@@ -7003,13 +7413,13 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
      * @return {!soydata.SanitizedHtml}
      * @suppress {checkTypes}
      */
-    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s139_d55fbf7b = function (opt_data, opt_ignored, opt_ijData) {
+    lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s202_d55fbf7b = function (opt_data, opt_ignored, opt_ijData) {
         return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.items(opt_data, null, opt_ijData));
     };
     if (goog.DEBUG) {
-        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s139_d55fbf7b.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s139_d55fbf7b";
+        lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s202_d55fbf7b.soyTemplateName = "Templates.TooltipMenu.__deltemplate_s202_d55fbf7b";
     }
-    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "content", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s139_d55fbf7b);
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TooltipMenu.items"), "content", 0, lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.__deltemplate_s202_d55fbf7b);
 
     lib$scripts$TooltipMenu$soy$$Templates.TooltipMenu.items.params = ["content"];
     "use strict";
@@ -7095,14 +7505,311 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
     src$public$vendor$metaljs$src$component$ComponentRegistry$$default.register("TooltipMenu", lib$scripts$TooltipMenu$$TooltipMenu);
 
     var lib$scripts$TooltipMenu$$default = lib$scripts$TooltipMenu$$TooltipMenu;
+    var lib$scripts$TreeView$soy$$Templates = src$public$vendor$metaljs$src$component$ComponentRegistry$$default.Templates;
+    // This file was automatically generated from TreeView.soy.
+    // Please don't edit this file by hand.
+
+    /**
+     * @fileoverview Templates in namespace Templates.TreeView.
+     * @hassoydeltemplate {TreeView}
+     * @hassoydeltemplate {TreeView.nodes}
+     * @hassoydelcall {TreeView}
+     * @hassoydelcall {TreeView.nodes}
+     */
+
+    if (typeof lib$scripts$TreeView$soy$$Templates.TreeView == "undefined") {
+        lib$scripts$TreeView$soy$$Templates.TreeView = {};
+    }
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.content = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("TreeView.nodes"), "", true)(opt_data, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.content.soyTemplateName = "Templates.TreeView.content";
+    }
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.nodes = function (opt_data, opt_ignored, opt_ijData) {
+        var output = "<ul class=\"treeview-nodes\">";
+        var nodeList209 = opt_data.nodes;
+        var nodeListLen209 = nodeList209.length;
+        for (var nodeIndex209 = 0; nodeIndex209 < nodeListLen209; nodeIndex209++) {
+            var nodeData209 = nodeList209[nodeIndex209];
+            var nodeId__soy210 = (opt_data.parentNodeId ? opt_data.parentNodeId : opt_data.id) + "-" + nodeIndex209;
+            var expanded__soy211 = nodeData209.children && nodeData209.expanded;
+            output += "<li id=\"" + soy.$$escapeHtmlAttribute(nodeId__soy210) + "\" class=\"treeview-node " + soy.$$escapeHtmlAttribute(expanded__soy211 ? "expanded" : "") + " " + soy.$$escapeHtmlAttribute(nodeData209.children ? "hasChildren" : "") + "\"><div class=\"treeview-node-main u-cf\" data-onclick=\"handleNodeClicked_\"><div class=\"treeview-node-toggler\"></div><span class=\"treeview-node-name\">" + soy.$$escapeHtml(nodeData209.name) + "</span></div>" + (nodeData209.children ? lib$scripts$TreeView$soy$$Templates.TreeView.nodes({ id: opt_data.id, nodes: nodeData209.children, parentNodeId: nodeId__soy210 }, null, opt_ijData) : "") + "</li>";
+        }
+        output += "</ul>";
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(output);
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.nodes.soyTemplateName = "Templates.TreeView.nodes";
+    }
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s230_13da0f6e = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("TreeView"), "element", true)({ elementClasses: opt_data.elementClasses, elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + soy.$$getDelegateFn(soy.$$getDelTemplateId("TreeView"), "content", true)(opt_data, null, opt_ijData)), id: opt_data.id }, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s230_13da0f6e.soyTemplateName = "Templates.TreeView.__deltemplate_s230_13da0f6e";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TreeView"), "", 0, lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s230_13da0f6e);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s236_e5ca7691 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$TreeView$soy$$Templates.TreeView.content(opt_data, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s236_e5ca7691.soyTemplateName = "Templates.TreeView.__deltemplate_s236_e5ca7691";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TreeView"), "content", 0, lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s236_e5ca7691);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s238_38810b2c = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml("<div id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "\" class=\"treeview component" + soy.$$escapeHtmlAttribute(opt_data.elementClasses ? " " + opt_data.elementClasses : "") + "\" data-component=\"\">" + soy.$$escapeHtml(opt_data.elementContent) + "</div>");
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s238_38810b2c.soyTemplateName = "Templates.TreeView.__deltemplate_s238_38810b2c";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TreeView"), "element", 0, lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s238_38810b2c);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s246_6f4f2112 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml("<div id=\"" + soy.$$escapeHtmlAttribute(opt_data.id) + "-nodes\">" + soy.$$escapeHtml(opt_data.elementContent) + "</div>");
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s246_6f4f2112.soyTemplateName = "Templates.TreeView.__deltemplate_s246_6f4f2112";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TreeView.nodes"), "element", 0, lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s246_6f4f2112);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s252_c801199b = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(soy.$$getDelegateFn(soy.$$getDelTemplateId("TreeView.nodes"), "element", true)({ elementContent: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks("" + (!opt_ijData.skipSurfaceContents ? soy.$$getDelegateFn(soy.$$getDelTemplateId("TreeView.nodes"), "content", true)(opt_data, null, opt_ijData) : "")), id: opt_data.id }, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s252_c801199b.soyTemplateName = "Templates.TreeView.__deltemplate_s252_c801199b";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TreeView.nodes"), "", 0, lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s252_c801199b);
+
+    /**
+     * @param {Object.<string, *>=} opt_data
+     * @param {(null|undefined)=} opt_ignored
+     * @param {Object.<string, *>=} opt_ijData
+     * @return {!soydata.SanitizedHtml}
+     * @suppress {checkTypes}
+     */
+    lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s259_96976d66 = function (opt_data, opt_ignored, opt_ijData) {
+        return soydata.VERY_UNSAFE.ordainSanitizedHtml(lib$scripts$TreeView$soy$$Templates.TreeView.nodes(opt_data, null, opt_ijData));
+    };
+    if (goog.DEBUG) {
+        lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s259_96976d66.soyTemplateName = "Templates.TreeView.__deltemplate_s259_96976d66";
+    }
+    soy.$$registerDelegateFn(soy.$$getDelTemplateId("TreeView.nodes"), "content", 0, lib$scripts$TreeView$soy$$Templates.TreeView.__deltemplate_s259_96976d66);
+
+    lib$scripts$TreeView$soy$$Templates.TreeView.nodes.params = ["id", "nodes"];
+    "use strict";
+
+    /**
+     * TreeView component.
+     */
+
+    var lib$scripts$TreeView$$TreeView = (function (_lib$scripts$Component$$default4) {
+        function lib$scripts$TreeView$$TreeView(opt_config) {
+            _classCallCheck(this, lib$scripts$TreeView$$TreeView);
+
+            _get(Object.getPrototypeOf(lib$scripts$TreeView$$TreeView.prototype), "constructor", this).call(this, opt_config);
+        }
+
+        _inherits(lib$scripts$TreeView$$TreeView, _lib$scripts$Component$$default4);
+
+        _createClass(lib$scripts$TreeView$$TreeView, {
+            attached: {
+
+                /**
+                 * Called after this component has been attached to the dom.
+                 */
+
+                value: function attached() {
+                    this.on("nodesChanged", this.onNodesChanged_.bind(this));
+                }
+            },
+            getNodeObj: {
+
+                /**
+                 * Gets the node object from the nodes attribute that is located at the given
+                 * index path.
+                 * @param {!Array<number>} path An array of indexes indicating where the searched
+                 *   node is located inside the nodes attribute.
+                 * @return {!Object}
+                 */
+
+                value: function getNodeObj(path) {
+                    var obj = this.nodes[path[0]];
+                    for (var i = 1; i < path.length; i++) {
+                        obj = obj.children[path[i]];
+                    }
+                    return obj;
+                }
+            },
+            getNodeObjFromId_: {
+
+                /**
+                 * Gets the node object that the given element id represents from the nodes
+                 * attribute
+                 * @param {string} id
+                 * @return {!Object}
+                 */
+
+                value: function getNodeObjFromId_(id) {
+                    var path = id.substr(this.id.length + 1).split("-");
+                    return this.getNodeObj(path);
+                }
+            },
+            getSurfaceContent_: {
+
+                /**
+                 * Overrides SoyComponent's original method, skipping it when the flag for
+                 * ignoring surface updates is set.
+                 * @param {string} surfaceId The surface id.
+                 * @return {Object|string} The content to be rendered.
+                 * @protected
+                 * @override
+                 */
+
+                value: function getSurfaceContent_(surfaceId) {
+                    if (!this.ignoreSurfaceUpdate_) {
+                        return _get(Object.getPrototypeOf(lib$scripts$TreeView$$TreeView.prototype), "getSurfaceContent_", this).call(this, surfaceId);
+                    }
+                    this.ignoreSurfaceUpdate_ = false;
+                }
+            },
+            handleNodeClicked_: {
+
+                /**
+                 * This is called when one of this tree view's nodes is clicked.
+                 * @param {Event} event
+                 * @protected
+                 */
+
+                value: function handleNodeClicked_(event) {
+                    var node = event.delegateTarget.parentNode;
+                    var nodeObj = this.getNodeObjFromId_(node.id);
+                    nodeObj.expanded = !nodeObj.expanded;
+                    if (nodeObj.expanded) {
+                        src$public$vendor$metaljs$src$dom$dom$$default.addClasses(node, ["expanded"]);
+                    } else {
+                        src$public$vendor$metaljs$src$dom$dom$$default.removeClasses(node, ["expanded"]);
+                    }
+
+                    this.nodes = this.nodes;
+                    this.ignoreSurfaceUpdate_ = true;
+                }
+            },
+            onNodesChanged_: {
+
+                /**
+                 * Fired when the `nodes` attribute changes. Make sure that any other
+                 * updates to the `nodes` attribute made after ignoreSurfaceUpdate_ is
+                 * set to true, cause surfaces to update again.
+                 * @return {[type]} [description]
+                 */
+
+                value: function onNodesChanged_() {
+                    this.ignoreSurfaceUpdate_ = false;
+                }
+            }
+        });
+
+        return lib$scripts$TreeView$$TreeView;
+    })(lib$scripts$Component$$default);
+
+    /**
+     * Default tree view elementClasses.
+     * @default treeView
+     * @type {String}
+     * @static
+     */
+    lib$scripts$TreeView$$TreeView.ELEMENT_CLASSES = "treeView";
+
+    /**
+     * TreeView attributes definition.
+     * @type {Object}
+     * @static
+     */
+    lib$scripts$TreeView$$TreeView.ATTRS = {
+        /**
+         * This tree view's nodes. Each node should have a name, and can optionally
+         * have nested children nodes. It should also indicate if its children are
+         * expanded or not.
+         * @type {Array<!{children: Array, expanded: boolean?, name: string}>}
+         * @default []
+         */
+        nodes: {
+            validator: Array.isArray,
+            valueFn: function valueFn() {
+                return [];
+            }
+        }
+    };
+
+    src$public$vendor$metaljs$src$component$ComponentRegistry$$default.register("TreeView", lib$scripts$TreeView$$TreeView);
+
+    var lib$scripts$TreeView$$default = lib$scripts$TreeView$$TreeView;
     this.ui = this.ui || {};
     this.ui.Affix = lib$scripts$Affix$$Affix;
     this.ui.Component = lib$scripts$Component$$Component;
+    this.ui.DragDropUpload = lib$scripts$DragDropUpload$$DragDropUpload;
+    this.ui.Features = lib$scripts$Features$$Features;
+    this.ui.List = lib$scripts$List$$List;
     this.ui.Modal = lib$scripts$Modal$$Modal;
     this.ui.Position = lib$scripts$Position$$Position;
     this.ui.Scrollspy = lib$scripts$Scrollspy$$Scrollspy;
     this.ui.Tooltip = lib$scripts$Tooltip$$Tooltip;
     this.ui.TooltipMenu = lib$scripts$TooltipMenu$$TooltipMenu;
+    this.ui.TreeView = lib$scripts$TreeView$$TreeView;
     this.ui.core = src$public$vendor$metaljs$src$core$$core;
     this.ui.dom = src$public$vendor$metaljs$src$dom$dom$$dom;
     this.ui.position = src$public$vendor$metal$position$src$position$$position;
@@ -7110,6 +7817,7 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
     this.ui.EventEmitter = src$public$vendor$metaljs$src$events$EventEmitter$$EventEmitter;
     this.ui.EventEmitterProxy = src$public$vendor$metaljs$src$events$EventEmitterProxy$$EventEmitterProxy;
     this.ui.SoyComponent = src$public$vendor$metaljs$src$soy$SoyComponent$$SoyComponent;
+    this.ui.Component = src$public$vendor$metaljs$src$component$Component$$Component;
     this.ui.ComponentRegistry = src$public$vendor$metaljs$src$component$ComponentRegistry$$ComponentRegistry;
     this.ui.EventHandler = src$public$vendor$metaljs$src$events$EventHandler$$EventHandler;
     this.ui.object = src$public$vendor$metaljs$src$object$object$$object;
@@ -7119,7 +7827,6 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
     this.ui.async = src$public$vendor$metaljs$src$async$async$$async;
     this.ui.Disposable = src$public$vendor$metaljs$src$disposable$Disposable$$Disposable;
     this.ui.EventHandle = src$public$vendor$metaljs$src$events$EventHandle$$EventHandle;
-    this.ui.Component = src$public$vendor$metaljs$src$component$Component$$Component;
     this.ui.ComponentCollector = src$public$vendor$metaljs$src$component$ComponentCollector$$ComponentCollector;
     this.ui.EventsCollector = src$public$vendor$metaljs$src$component$EventsCollector$$EventsCollector;
     this.ui.features = src$public$vendor$metaljs$src$dom$features$$features;
